@@ -1,3 +1,5 @@
+import java.io.File   // needed: in this script "java" alone means Gradle's java setting, so File is imported by name
+
 // TV page app: one single module (no sub-folder), plain Java + WebView, no extra libraries.
 plugins {
     id("com.android.application") version "8.7.2"
@@ -22,8 +24,8 @@ android {
     signingConfigs {
         create("ftg") {
             val ks = System.getenv("FTG_KEYSTORE")
-            if (ks != null && java.io.File(ks).exists()) {
-                storeFile = java.io.File(ks)
+            if (ks != null && File(ks).exists()) {
+                storeFile = File(ks)
                 storeType = "pkcs12"
                 storePassword = System.getenv("FTG_KEYSTORE_PASSWORD")
                 keyAlias = "ftg"
