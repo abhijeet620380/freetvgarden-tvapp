@@ -58,7 +58,7 @@ internal fun http(url: String): String {
     val c = URL(url).openConnection() as HttpURLConnection
     c.connectTimeout = 20000
     c.readTimeout    = 40000
-    c.setRequestProperty("User-Agent", "FreeTvGarden-Android/1.0")
+    c.setRequestProperty("User-Agent", "FreeTVGarden-Android/1.0")
     return try {
         c.inputStream.bufferedReader().use { it.readText() }
     } finally {
