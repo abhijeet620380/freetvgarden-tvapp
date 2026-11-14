@@ -1,2 +1,0 @@
-# freetvgarden-tvapp
-
