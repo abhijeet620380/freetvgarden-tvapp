@@ -1,0 +1,74 @@
+name: Build TV page APK
+
+# Builds the APK for free on GitHub whenever you push, or by hand:
+# GitHub -> Actions -> "Build TV page APK" -> Run workflow.
+on:
+  push:
+    branches: [main, master]
+    paths: ['tvpage/**', '.github/workflows/build-tvpage.yml']   # only rebuilds when this app changes
+  workflow_dispatch:
+
+# "contents: write" lets the job publish the APK as a GitHub Release (that makes the download link).
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      # OPTIONAL permanent signing key (the same two secrets as your other app).
+      # Without them the APK is still built and installs fine; only "update over the old one" would need the same key.
+      - name: Prepare the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/ftg.p12"
+            echo "FTG_KEYSTORE=$RUNNER_TEMP/ftg.p12" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No KEYSTORE_BASE64 secret - building with a temporary key."
+          fi
+
+      - name: Build APK
+        env:
+          FTG_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        working-directory: tvpage      # this app lives in the tvpage folder
+        run: gradle assembleDebug --no-daemon -PftgVersionCode=${{ github.run_number }} -PftgVersionName=1.${{ github.run_number }}
+
+      - name: Rename APK
+        run: cp tvpage/build/outputs/apk/debug/*-debug.apk FreeTV-TV.apk
+
+      # Copy on the run page too (Actions -> the run -> Artifacts)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FreeTV-TV-apk
+          path: FreeTV-TV.apk
+
+      # Permanent link to the newest APK:
+      #   https://github.com/<you>/<this-repo>/releases/download/tvpage-latest/FreeTV-TV.apk
+      - name: Move the "tvpage-latest" tag to this commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag -f tvpage-latest
+          git push -f origin tvpage-latest
+
+      - name: Publish APK to the "tvpage-latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tvpage-latest
+          name: FreeTV Garden TV page app (latest build)
+          body: Newest build of the FreeTV Garden Android TV app that opens freetvgarden.com/tv/.
+          files: FreeTV-TV.apk
+          make_latest: false
