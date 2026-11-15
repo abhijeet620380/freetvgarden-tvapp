@@ -9,7 +9,7 @@
         android:allowBackup="true"
         android:banner="@drawable/banner"
         android:icon="@drawable/ic_launcher"
-        android:label="FreeTV Garden TV"
+        android:label="FreeTV"
         android:theme="@style/Theme.LiveTV"
         android:usesCleartextTraffic="true">
         <activity
